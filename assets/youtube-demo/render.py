@@ -21,6 +21,40 @@ for start in (.18,1.15,2.8):
  u=ts-start;mask=(u>=0)&(u<.3);sound[mask]+=rng.normal(0,.055,mask.sum())*np.sin(np.pi*u[mask]/.3)**2
 for start,freq in ((2.95,660),(3.08,880)):
  u=ts-start;mask=(u>=0)&(u<.3);sound[mask]+=.10*np.sin(2*np.pi*freq*u[mask])*np.exp(-u[mask]*14)*np.minimum(u[mask]/.012,1)
+# Original electronic music bed: 96 BPM, A minor, eight beats.
+# All instruments are synthesized here; no samples or external recording.
+music=np.zeros_like(ts)
+def note_frequency(midi):return 440*2**((midi-69)/12)
+for beat in range(8):
+ start=beat*.625;u=ts-start;mask=(u>=0)&(u<.42);v=u[mask]
+ # Pitch-swept kick with a short click transient.
+ phase=2*np.pi*(48*v+100*.022*(1-np.exp(-v/.022)))
+ music[mask]+=.23*np.sin(phase)*np.exp(-v*13)
+ if beat%2:
+  mask=(u>=0)&(u<.16);v=u[mask]
+  music[mask]+=.07*rng.normal(0,1,len(v))*np.exp(-v*28)
+for step in range(16):
+ u=ts-step*.3125;mask=(u>=0)&(u<.055);v=u[mask]
+ noise=rng.normal(0,1,len(v));high=noise-np.roll(noise,1)
+ music[mask]+=.018*high*np.exp(-v*70)
+# Am / F / C / G, softly voiced synth chords and bass.
+for chord_index,chord in enumerate(((57,60,64),(53,57,60),(55,60,64),(55,59,62))):
+ u=ts-chord_index*1.25;mask=(u>=0)&(u<1.25);v=u[mask]
+ envelope=np.minimum(v/.07,1)*np.minimum((1.25-v)/.15,1)
+ for midi in chord:
+  f=note_frequency(midi)
+  music[mask]+=.035*(np.sin(2*np.pi*f*v)+.25*np.sin(2*np.pi*f*2*v))*envelope
+ f=note_frequency(chord[0]-12)
+ music[mask]+=.10*np.sin(2*np.pi*f*v)*envelope
+for step,midi in enumerate((76,79,81,79,77,76,72,76,79,84,83,79,74,79,83,81)):
+ u=ts-step*.3125;mask=(u>=0)&(u<.3);v=u[mask];f=note_frequency(midi)
+ envelope=np.minimum(v/.009,1)*np.exp(-v*12)
+ music[mask]+=.045*(np.sin(2*np.pi*f*v)+.2*np.sin(2*np.pi*2*f*v))*envelope
+music*=np.minimum(ts/.025,1)*np.clip((DURATION-ts)/.25,0,1)
+sound+=music
+peak=np.max(np.abs(sound))
+if peak>.8:sound*=.8/peak
+print(f'Audio peak: {np.max(np.abs(sound)):.3f}; RMS: {np.sqrt(np.mean(sound**2)):.3f}')
 wav=ROOT/'sound.wav'
 with wave.open(str(wav),'wb') as f:
  f.setnchannels(1);f.setsampwidth(2);f.setframerate(sr);f.writeframes((np.clip(sound,-1,1)*32767).astype('<i2').tobytes())
