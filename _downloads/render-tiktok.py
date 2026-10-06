@@ -1,8 +1,9 @@
 """Original Vogz promotional TikTok: 1080x1920, 15 s, 30 fps.
 Requires Pillow, NumPy and ffmpeg. Run from repository root.
+Pass a music-file path to use its 22–37 second excerpt instead of synthesized audio.
 """
 from pathlib import Path
-import subprocess,math,wave
+import subprocess,math,wave,sys
 import numpy as np
 from PIL import Image,ImageDraw,ImageFont
 ROOT=Path(__file__).resolve().parent;W,H,FPS,DURATION=1080,1920,30,15
@@ -33,6 +34,9 @@ for k in range(48):
 audio*=np.minimum(ts/.04,1)*np.clip((15-ts)/.6,0,1)
 wav=ROOT/'tiktok-temp.wav'
 with wave.open(str(wav),'wb') as f:f.setnchannels(1);f.setsampwidth(2);f.setframerate(sr);f.writeframes((audio*32767).astype('<i2').tobytes())
+# Optional user-supplied music, matching the currently delivered version.
+if len(sys.argv)>1:
+ subprocess.run(['ffmpeg','-y','-v','error','-ss','22','-i',sys.argv[1],'-t','15','-ac','1','-ar','48000','-af','volume=0.8,afade=t=in:st=0:d=0.04,afade=t=out:st=14.4:d=0.6',str(wav)],check=True)
 proc=subprocess.Popen(['ffmpeg','-y','-v','error','-f','rawvideo','-pix_fmt','rgb24','-s','1080x1920','-r','30','-i','-','-i',str(wav),'-c:v','libx264','-preset','fast','-crf','19','-pix_fmt','yuv420p','-c:a','aac','-b:a','192k','-movflags','+faststart','-t','15',str(ROOT/'vogz-offres-tiktok.mp4')],stdin=subprocess.PIPE)
 for i in range(450):
  t=i/FPS;im=Image.new('RGB',(W,H),BG);d=ImageDraw.Draw(im)
@@ -88,4 +92,4 @@ for i in range(450):
    alpha=int(95*(1-abs(t-boundary)/.10));im=Image.blend(im,Image.new('RGB',(W,H),BG),alpha/255)
  if i==400:im.save(ROOT/'vogz-tiktok-cover.jpg',quality=92)
  proc.stdin.write(im.tobytes())
-proc.stdin.close();assert proc.wait()==0;wav.unlink();print('TikTok exporté : 15 s, 1080×1920, avec musique originale.')
+proc.stdin.close();assert proc.wait()==0;wav.unlink();print('TikTok exporté : 15 s, 1080×1920.')
