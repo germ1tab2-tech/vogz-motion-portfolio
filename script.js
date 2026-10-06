@@ -68,7 +68,7 @@ document.querySelectorAll('[data-offer]').forEach(link => {
   link.addEventListener('click', () => {
     const offer = link.dataset.offer;
     document.querySelector('#selected-offer').textContent = `Parlons de ton projet : ${offer}`;
-    emailLink.href = `mailto:hello@vogzmotion.example?subject=${encodeURIComponent(`Mon projet — ${offer}`)}`;
+    emailLink.href = `mailto:germainboy02@gmail.com?subject=${encodeURIComponent(`Mon projet — ${offer}`)}`;
   });
 });
 document.querySelector('#year').textContent = new Date().getFullYear();
