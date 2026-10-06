@@ -7,6 +7,7 @@ from PIL import Image, ImageDraw, ImageFont
 import math,subprocess,json,sys
 ROOT=Path(__file__).resolve().parent
 selection=json.loads((ROOT/'selection.json').read_text())
+entrances=selection['entrances']
 if len(sys.argv)!=2:raise SystemExit('Usage: python3 render.py music.mp3')
 music=Path(sys.argv[1]).resolve()
 if not music.is_file():raise SystemExit('Music file not found')
@@ -27,22 +28,22 @@ for i in range(300):
  drift=15*math.sin(t*.5);d.polygon([(1620+drift,0),(1840+drift,0),(1520+drift,H),(1300+drift,H)],fill='#1b2732')
  d.rectangle((100,100,110,145),fill='#ff4655');txt(d,132,103,'VOGZ / MOTION STUDIO',24,'#a7bdc9')
  layer=Image.new('RGBA',(W,H));ld=ImageDraw.Draw(layer)
- a=ease(t,0,.48);txt(ld,110,180+int(28*(1-a)),'MERCI D’AVOIR REGARDÉ.',82,(238,234,226,int(255*a)))
+ a=ease(t,entrances[0],.48);txt(ld,110,180+int(28*(1-a)),'MERCI D’AVOIR REGARDÉ.',82,(238,234,226,int(255*a)))
  im=Image.alpha_composite(im.convert('RGBA'),layer).convert('RGB');d=ImageDraw.Draw(im)
  # End-screen subscription target, held steady after its entrance.
- a=ease(t,.499,.46);cx,cy=350,590;r=int(120*a)
+ a=ease(t,entrances[1],.46);cx,cy=350,590;r=int(120*a)
  if r:
   pulse=max((math.exp(-max(0,t-onset)*14) for onset in selection['onsets'] if onset<=t),default=0)
   rr=r+12+int(4*pulse)
   d.ellipse((cx-rr,cy-rr,cx+rr,cy+rr),outline='#80e5dc',width=2)
   d.ellipse((cx-r,cy-r,cx+r,cy+r),fill='#ff4655')
  if a>.95:center(d,cx,cy-48,'V.',82,'#ffffff')
- if t>.986:
+ if t>entrances[2]:
   center(d,cx,760,'ABONNE-TOI',32,'#ece8e1')
   center(d,cx,815,'LA SUITE ARRIVE.',20,'#80e5dc')
  # Two clean video slots, suitable for YouTube Studio end-screen overlays.
  for k,x in enumerate((750,1280)):
-  a=ease(t,.987+k*.487,.44);y=int(480+30*(1-a));ww,hh=470,264
+  a=ease(t,entrances[2+k],.44);y=int(480+30*(1-a));ww,hh=470,264
   if a>0:
    d.rectangle((x,y,x+ww,y+hh),fill='#1b2b37',outline='#4a6878',width=2)
    # Corner accents keep the video slots recognizable and unobstructed.
@@ -51,7 +52,7 @@ for i in range(300):
   if a>.95:
    center(d,x+ww/2,y+100,'TA VIDÉO ICI',28,'#688797')
    center(d,x+ww/2,795,('À VOIR ENSUITE','À DÉCOUVRIR')[k],24,'#ece8e1')
- if t>1.974:txt(d,750,390,'ON SE RETROUVE DANS LA PROCHAINE.',28,'#80e5dc')
+ if t>entrances[4]:txt(d,750,390,'ON SE RETROUVE DANS LA PROCHAINE.',28,'#80e5dc')
  d.line((110,945,1810,945),fill='#344653',width=1)
  txt(d,110,975,'TON UNIVERS. TON STYLE.',20,'#90a8b8')
  txt(d,1530,975,'VOGZ GAMING',20,'#90a8b8')
