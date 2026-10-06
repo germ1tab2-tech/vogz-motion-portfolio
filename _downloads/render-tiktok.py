@@ -1,6 +1,6 @@
 """Original Vogz promotional TikTok: 1080x1920, 15 s, 30 fps.
 Requires Pillow, NumPy and ffmpeg. Run from repository root.
-Pass a music-file path to use its 22–37 second excerpt instead of synthesized audio.
+Pass a music-file path to use a 15-second excerpt starting at the optional second argument instead of synthesized audio.
 """
 from pathlib import Path
 import subprocess,math,wave,sys
@@ -36,7 +36,7 @@ wav=ROOT/'tiktok-temp.wav'
 with wave.open(str(wav),'wb') as f:f.setnchannels(1);f.setsampwidth(2);f.setframerate(sr);f.writeframes((audio*32767).astype('<i2').tobytes())
 # Optional user-supplied music, matching the currently delivered version.
 if len(sys.argv)>1:
- subprocess.run(['ffmpeg','-y','-v','error','-ss','22','-i',sys.argv[1],'-t','15','-ac','1','-ar','48000','-af','volume=0.8,afade=t=in:st=0:d=0.04,afade=t=out:st=14.4:d=0.6',str(wav)],check=True)
+ subprocess.run(['ffmpeg','-y','-v','error','-ss',sys.argv[2] if len(sys.argv)>2 else '21.514' ,'-i',sys.argv[1],'-t','15','-ac','1','-ar','48000','-af','volume=0.8,afade=t=in:st=0:d=0.04,afade=t=out:st=14.4:d=0.6',str(wav)],check=True)
 proc=subprocess.Popen(['ffmpeg','-y','-v','error','-f','rawvideo','-pix_fmt','rgb24','-s','1080x1920','-r','30','-i','-','-i',str(wav),'-c:v','libx264','-preset','fast','-crf','19','-pix_fmt','yuv420p','-c:a','aac','-b:a','192k','-movflags','+faststart','-t','15',str(ROOT/'vogz-offres-tiktok.mp4')],stdin=subprocess.PIPE)
 for i in range(450):
  t=i/FPS;im=Image.new('RGB',(W,H),BG);d=ImageDraw.Draw(im)
