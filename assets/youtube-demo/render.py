@@ -15,12 +15,26 @@ def ease(t,start,duration=.65):
  x=max(0,min(1,(t-start)/duration));return 1-(1-x)**3
 def text(draw,pos,label,size,color):draw.text(pos,label,font=fonts[size],fill=color)
 def width(label,size):return fonts[size].getlength(label)
-# Original synthesized sound: quiet transition sweeps and a two-note accent.
+# Soft, low-volume swells synchronized with the visual entrances.
 sr=48000;ts=np.arange(sr*DURATION)/sr;rng=np.random.default_rng(8);sound=np.zeros_like(ts)
+# Preserve the music's random percussion sequence from the previous version.
 for start in (.18,1.15,2.8):
- u=ts-start;mask=(u>=0)&(u<.3);sound[mask]+=rng.normal(0,.055,mask.sum())*np.sin(np.pi*u[mask]/.3)**2
-for start,freq in ((2.95,660),(3.08,880)):
- u=ts-start;mask=(u>=0)&(u<.3);sound[mask]+=.10*np.sin(2*np.pi*freq*u[mask])*np.exp(-u[mask]*14)*np.minimum(u[mask]/.012,1)
+ u=ts-start;mask=(u>=0)&(u<.3);rng.normal(0,.055,mask.sum())
+fx_rng=np.random.default_rng(21)
+for start in (.12,.48,1.05,2.65):
+ u=ts-start;mask=(u>=0)&(u<.5);v=u[mask]
+ # A smoothed, airy texture with rounded fade-in and fade-out, no click.
+ noise=fx_rng.normal(0,1,len(v))
+ noise=np.convolve(noise,np.hanning(81)/np.hanning(81).sum(),mode='same')
+ envelope=np.sin(np.pi*v/.5)**2
+ sound[mask]+=.035*noise*envelope
+ # A warm tonal layer under the breath, quieter than the music.
+ phase=2*np.pi*(150*v+30*v*v)
+ sound[mask]+=.012*np.sin(phase)*envelope
+# A soft, consonant accent on the subscription button, with slow attack.
+u=ts-2.8;mask=(u>=0)&(u<.7);v=u[mask]
+envelope=np.sin(np.pi*v/.7)**2*np.exp(-v*3)
+sound[mask]+=.014*(np.sin(2*np.pi*330*v)+.5*np.sin(2*np.pi*440*v))*envelope
 # Original electronic music bed: 96 BPM, A minor, eight beats.
 # All instruments are synthesized here; no samples or external recording.
 music=np.zeros_like(ts)
